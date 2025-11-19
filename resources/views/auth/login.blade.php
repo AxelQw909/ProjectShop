@@ -10,7 +10,6 @@
                 <h4 class="mb-0">Вход в систему</h4>
             </div>
             <div class="card-body">
-                <!-- Подсказка для тестирования -->
                 <div class="alert alert-info">
                     <strong>Для тестирования:</strong><br>
                     Админ: admin@shop.ru / admin123<br>

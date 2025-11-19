@@ -39,10 +39,8 @@ class OrderController extends Controller
             return redirect()->route('cart.index')->with('error', 'Корзина пуста');
         }
 
-        // Расчет стоимости доставки
         $deliveryCost = $this->calculateDeliveryCost($request->delivery_method, $cart->total);
 
-        // Создание заказа
         $order = Order::create([
             'user_id' => Auth::id(),
             'customer_name' => $request->customer_name,
@@ -55,7 +53,6 @@ class OrderController extends Controller
             'promo_code' => $request->promo_code,
         ]);
 
-        // Создание элементов заказа
         foreach ($items as $cartItem) {
             OrderItem::create([
                 'order_id' => $order->id,
@@ -67,7 +64,6 @@ class OrderController extends Controller
             ]);
         }
 
-        // Очистка корзины
         $cart->items()->delete();
 
         return redirect()->route('orders.show', $order)->with('success', 'Заказ успешно оформлен!');

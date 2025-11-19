@@ -12,13 +12,11 @@ class ProductController extends Controller
     {
         $query = Product::with('category')->where('is_active', true);
         
-        // Поиск
         if ($request->has('search') && $request->search) {
             $query->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('description', 'like', '%' . $request->search . '%');
         }
         
-        // Фильтр по категории
         if ($request->has('category') && $request->category) {
             $query->where('category_id', $request->category);
         }

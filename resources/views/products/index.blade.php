@@ -5,7 +5,6 @@
 @section('content')
 <div class="row">
     <div class="col-md-3">
-        <!-- Фильтры -->
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">Фильтры</h5>
@@ -39,7 +38,6 @@
     </div>
 
     <div class="col-md-9">
-        <!-- Товары -->
         <div class="row">
             @foreach($products as $product)
                 <div class="col-lg-4 col-md-6 mb-4">
@@ -64,7 +62,6 @@
             @endforeach
         </div>
 
-        <!-- Пагинация -->
         <div class="d-flex justify-content-center">
             {{ $products->links() }}
         </div>

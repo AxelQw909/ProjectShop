@@ -10,7 +10,6 @@
                 <h4 class="mb-0">Регистрация</h4>
             </div>
             <div class="card-body">
-                <!-- Подсказка для тестирования -->
                 <div class="alert alert-info">
                     <strong>Уже есть аккаунт?</strong><br>
                     Админ: admin@shop.ru / admin123<br>

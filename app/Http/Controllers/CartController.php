@@ -26,7 +26,6 @@ class CartController extends Controller
 
         $cart = Auth::user()->cart;
 
-        // Проверяем, есть ли уже этот товар в корзине
         $existingItem = $cart->items()->where('product_id', $product->id)->first();
 
         if ($existingItem) {

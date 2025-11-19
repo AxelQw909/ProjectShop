@@ -21,7 +21,16 @@
             <div class="navbar-nav ms-auto">
                 @auth
                     @if(Auth::user()->isAdmin())
-                        <a class="nav-link" href="{{ route('admin.dashboard') }}">Панель администратора</a>
+                        <div class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Админка
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">Дашборд</a></li>
+                                <li><a class="dropdown-item" href="{{ route('admin.products') }}">Товары</a></li>
+                                <li><a class="dropdown-item" href="{{ route('admin.categories') }}">Категории</a></li>
+                            </ul>
+                        </div>
                     @endif
                     <a class="nav-link position-relative" href="{{ route('cart.index') }}">
                         Корзина
@@ -54,13 +63,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Добавляем CSRF токен ко всем AJAX запросам
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
         // Обновление счетчика корзины
         async function updateCartCount() {
             try {

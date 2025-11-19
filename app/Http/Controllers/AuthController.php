@@ -13,7 +13,6 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        // Если пользователь уже авторизован, редиректим
         if (auth()->check()) {
             if (auth()->user()->isAdmin()) {
                 return redirect()->route('admin.dashboard');
@@ -26,7 +25,6 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // Если пользователь уже авторизован, редиректим
         if (auth()->check()) {
             if (auth()->user()->isAdmin()) {
                 return redirect()->route('admin.dashboard');
@@ -43,7 +41,6 @@ class AuthController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Проверяем существует ли пользователь с таким email
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
@@ -52,7 +49,6 @@ class AuthController extends Controller
             ])->withInput();
         }
 
-        // Проверяем пароль
         if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             return back()->withErrors([
                 'password' => 'Неверный пароль.',
@@ -61,7 +57,6 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
         
-        // Создаем корзину для пользователя если её нет
         $user = Auth::user();
         if (!$user->cart) {
             Cart::create(['user_id' => $user->id]);
@@ -76,7 +71,6 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        // Если пользователь уже авторизован, редиректим
         if (auth()->check()) {
             if (auth()->user()->isAdmin()) {
                 return redirect()->route('admin.dashboard');
@@ -89,7 +83,6 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        // Если пользователь уже авторизован, редиректим
         if (auth()->check()) {
             if (auth()->user()->isAdmin()) {
                 return redirect()->route('admin.dashboard');
@@ -116,7 +109,6 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Создаем корзину для нового пользователя
         Cart::create(['user_id' => $user->id]);
 
         Auth::login($user);
