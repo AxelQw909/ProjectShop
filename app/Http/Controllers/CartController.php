@@ -24,13 +24,28 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1|max:' . $product->stock
         ]);
 
+        // Проверяем доступность товара
+        if ($product->stock < $request->quantity) {
+            return redirect()->back()->with('error', 
+                'Товар "' . $product->name . '" недоступен в количестве ' . $request->quantity . ' шт. Доступно: ' . $product->stock . ' шт.');
+        }
+
         $cart = Auth::user()->cart;
 
+        // Проверяем, есть ли уже этот товар в корзине
         $existingItem = $cart->items()->where('product_id', $product->id)->first();
 
         if ($existingItem) {
+            $newQuantity = $existingItem->quantity + $request->quantity;
+            
+            // Проверяем общее количество
+            if ($product->stock < $newQuantity) {
+                return redirect()->back()->with('error', 
+                    'Нельзя добавить больше ' . $product->stock . ' шт. товара "' . $product->name . '"');
+            }
+            
             $existingItem->update([
-                'quantity' => $existingItem->quantity + $request->quantity
+                'quantity' => $newQuantity
             ]);
         } else {
             CartItem::create([
@@ -48,6 +63,12 @@ class CartController extends Controller
         $request->validate([
             'quantity' => 'required|integer|min:1|max:' . $item->product->stock
         ]);
+
+        // Проверяем доступность товара
+        if ($item->product->stock < $request->quantity) {
+            return redirect()->back()->with('error', 
+                'Товар "' . $item->product->name . '" недоступен в количестве ' . $request->quantity . ' шт. Доступно: ' . $item->product->stock . ' шт.');
+        }
 
         $item->update(['quantity' => $request->quantity]);
 

@@ -9,6 +9,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -41,9 +42,47 @@ class AdminController extends Controller
             'status' => 'required|in:Новая,В работе,Отменена,Завершена'
         ]);
 
-        $order->update(['status' => $request->status]);
+        $oldStatus = $order->status;
+        $newStatus = $request->status;
+
+        // Используем транзакцию для безопасности данных
+        DB::transaction(function () use ($order, $newStatus, $oldStatus) {
+            // Если статус меняется на "Отменена", возвращаем товары на склад
+            if ($oldStatus !== 'Отменена' && $newStatus === 'Отменена') {
+                $this->returnProductsToStock($order);
+            }
+            
+            // Если статус меняется с "Отменена" на другой, снова уменьшаем количество
+            if ($oldStatus === 'Отменена' && $newStatus !== 'Отменена') {
+                $this->deductProductsFromStock($order);
+            }
+
+            $order->update(['status' => $newStatus]);
+        });
 
         return redirect()->back()->with('success', 'Статус заказа обновлен');
+    }
+
+    // Метод для возврата товаров на склад при отмене заказа
+    private function returnProductsToStock(Order $order)
+    {
+        foreach ($order->items as $item) {
+            $product = Product::find($item->product_id);
+            if ($product) {
+                $product->increment('stock', $item->quantity);
+            }
+        }
+    }
+
+    // Метод для уменьшения количества товаров при восстановлении заказа из отмены
+    private function deductProductsFromStock(Order $order)
+    {
+        foreach ($order->items as $item) {
+            $product = Product::find($item->product_id);
+            if ($product && $product->stock >= $item->quantity) {
+                $product->decrement('stock', $item->quantity);
+            }
+        }
     }
 
     public function deleteUser(User $user)

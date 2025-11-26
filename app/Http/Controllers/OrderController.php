@@ -6,8 +6,10 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -39,34 +41,51 @@ class OrderController extends Controller
             return redirect()->route('cart.index')->with('error', 'Корзина пуста');
         }
 
-        $deliveryCost = $this->calculateDeliveryCost($request->delivery_method, $cart->total);
-
-        $order = Order::create([
-            'user_id' => Auth::id(),
-            'customer_name' => $request->customer_name,
-            'address' => $request->address,
-            'payment_method' => $request->payment_method,
-            'delivery_method' => $request->delivery_method,
-            'subtotal' => $cart->total,
-            'delivery_cost' => $deliveryCost,
-            'total' => $cart->total + $deliveryCost,
-            'promo_code' => $request->promo_code,
-        ]);
-
-        foreach ($items as $cartItem) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $cartItem->product_id,
-                'product_name' => $cartItem->product->name,
-                'price' => $cartItem->product->price,
-                'quantity' => $cartItem->quantity,
-                'total' => $cartItem->quantity * $cartItem->product->price,
-            ]);
+        // Проверяем доступность товаров
+        foreach ($items as $item) {
+            if ($item->product->stock < $item->quantity) {
+                return redirect()->route('cart.index')->with('error', 
+                    'Товар "' . $item->product->name . '" недоступен в количестве ' . $item->quantity . ' шт. Доступно: ' . $item->product->stock . ' шт.');
+            }
         }
 
-        $cart->items()->delete();
+        $deliveryCost = $this->calculateDeliveryCost($request->delivery_method, $cart->total);
 
-        return redirect()->route('orders.show', $order)->with('success', 'Заказ успешно оформлен!');
+        // Используем транзакцию для безопасности данных
+        DB::transaction(function () use ($request, $cart, $items, $deliveryCost) {
+            // Создание заказа
+            $order = Order::create([
+                'user_id' => Auth::id(),
+                'customer_name' => $request->customer_name,
+                'address' => $request->address,
+                'payment_method' => $request->payment_method,
+                'delivery_method' => $request->delivery_method,
+                'subtotal' => $cart->total,
+                'delivery_cost' => $deliveryCost,
+                'total' => $cart->total + $deliveryCost,
+                'promo_code' => $request->promo_code,
+            ]);
+
+            // Создание элементов заказа и уменьшение количества товаров
+            foreach ($items as $cartItem) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $cartItem->product_id,
+                    'product_name' => $cartItem->product->name,
+                    'price' => $cartItem->product->price,
+                    'quantity' => $cartItem->quantity,
+                    'total' => $cartItem->quantity * $cartItem->product->price,
+                ]);
+
+                // Уменьшаем количество товара на складе
+                $cartItem->product->decrement('stock', $cartItem->quantity);
+            }
+
+            // Очистка корзины
+            $cart->items()->delete();
+        });
+
+        return redirect()->route('orders.index')->with('success', 'Заказ успешно оформлен!');
     }
 
     public function show(Order $order)

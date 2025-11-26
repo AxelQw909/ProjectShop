@@ -29,6 +29,11 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
+        // Проверяем доступность товара
+        if (!$product->is_active) {
+            abort(404, 'Товар не найден');
+        }
+
         return view('products.show', compact('product'));
     }
 }
